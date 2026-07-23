@@ -1,4 +1,5 @@
-const SHOPIFY_SHOP_DOMAIN = process.env.SHOPIFY_SHOP_DOMAIN;
+const SHOPIFY_SHOP_DOMAIN =
+  process.env.SHOPIFY_SHOP_DOMAIN || process.env.SHOPIFY_STORE;
 const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
 const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
 const API_VERSION = '2026-07';
@@ -16,16 +17,19 @@ async function getAccessToken() {
   }
 
   const tokenUrl = `https://${SHOPIFY_SHOP_DOMAIN}/admin/oauth/access_token`;
+  console.log("Shop Domain:", SHOPIFY_SHOP_DOMAIN);
+  console.log("Token URL:", tokenUrl);
+  const params = new URLSearchParams();
+  params.append("grant_type", "client_credentials");
+  params.append("client_id", SHOPIFY_CLIENT_ID);
+  params.append("client_secret", SHOPIFY_CLIENT_SECRET);
+
   const response = await fetch(tokenUrl, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify({
-      client_id: SHOPIFY_CLIENT_ID,
-      client_secret: SHOPIFY_CLIENT_SECRET,
-      grant_type: 'client_credentials',
-    }),
+    body: params.toString(),
   });
 
   if (!response.ok) {
@@ -60,6 +64,7 @@ function generateCouponCode() {
  */
 async function createShopifyCoupon() {
   const token = await getAccessToken();
+  console.log("Access Token:", token);
   const couponCode = generateCouponCode();
 
   const startDate = new Date();
@@ -99,6 +104,11 @@ async function createShopifyCoupon() {
       endsAt: endDate.toISOString(),
       usageLimit: 1,
       appliesOncePerCustomer: true,
+      
+      context: {
+        all: "ALL"
+      },
+      
       customerGets: {
         value: {
           percentage: 0.10
@@ -107,9 +117,7 @@ async function createShopifyCoupon() {
           all: true
         }
       },
-      customerSelections: {
-        all: true
-      },
+      
       minimumRequirement: {
         subtotal: {
           greaterThanOrEqualToSubtotal: "999.00"
