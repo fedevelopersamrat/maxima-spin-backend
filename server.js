@@ -7,6 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Maxima Spin Wheel Backend Running ✅");
+});
+
 // Random Coupon Generator
 function generateCoupon() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
