@@ -1,47 +1,33 @@
-const axios = require("axios");
-
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { createShopifyCoupon } = require('./shopify');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Maxima Spin Wheel Backend Running ✅");
+// Health Check Route
+app.get('/', (req, res) => {
+  res.send({ status: 'ok', message: 'Spin Wheel Backend API is running' });
 });
 
-// Random Coupon Generator
-function generateCoupon() {
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const numbers = "0123456789";
-
-  let code = "";
-
-  for (let i = 0; i < 2; i++) {
-    code += letters[Math.floor(Math.random() * letters.length)];
+// Main Coupon Endpoint
+app.get('/api/coupon', async (req, res) => {
+  try {
+    const result = await createShopifyCoupon();
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('API Error generating coupon:', error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create Shopify coupon'
+    });
   }
-
-  for (let i = 0; i < 3; i++) {
-    code += numbers[Math.floor(Math.random() * numbers.length)];
-  }
-
-  return code;
-}
-
-app.get("/coupon", (req, res) => {
-  const coupon = generateCoupon();
-
-  res.json({
-    success: true,
-    coupon: coupon,
-  });
 });
-
-const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server Running on Port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
